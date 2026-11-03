@@ -42,13 +42,13 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 4px 22px;
 </style>
 
 <link rel="manifest" href="./manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Kapda Register">
 </head>
 <body>
-<header><h1>✂️ Kapda Register</h1><p>Number · Quantity · Papa / Me cutting</p></header>
+<header><div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><div><h1>✂️ Kapda Register</h1><p>Number · Quantity · Papa / Me cutting</p></div><button id="installApp" style="display:none;background:white;color:#172554;padding:9px 11px;border-radius:10px;font-size:12px">Install App</button></div></header>
 <main>
 <section class="card">
  <label for="date">Date</label><input id="date" type="date">
@@ -167,6 +167,23 @@ render();
 </script>
 
 <script>
+let deferredInstallPrompt = null;
+const installBtn = document.getElementById('installApp');
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  installBtn.style.display = 'block';
+});
+installBtn?.addEventListener('click', async () => {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  installBtn.style.display = 'none';
+});
+window.addEventListener('appinstalled', () => {
+  installBtn.style.display = 'none';
+});
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(() => {});

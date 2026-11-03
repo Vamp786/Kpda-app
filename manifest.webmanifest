@@ -1,21 +1,24 @@
 {
+  "id": "./",
   "name": "Kapda Register",
   "short_name": "Kapda",
   "description": "Private daily kapda cutting register",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#f4f6fb",
   "theme_color": "#172554",
+  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "./icons/icon-192.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./icons/icon-512.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
