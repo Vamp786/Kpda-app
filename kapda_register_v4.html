@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#172554">
+<title>Kapda Register</title>
+<style>
+:root{color-scheme:light;--navy:#172554;--blue:#2563eb;--line:#e2e8f0;--muted:#64748b;--bg:#f4f6fb}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#172033}
+header{background:var(--navy);color:white;padding:21px 17px 24px;border-radius:0 0 22px 22px}
+h1{font-size:23px;margin:0 0 4px}header p{margin:0;color:#cbd5e1;font-size:13px}
+main{max-width:650px;margin:auto;padding:14px 12px 34px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+input,textarea,button{font:inherit}input[type=date],input[type=text],input[type=number],textarea{width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:11px;background:white;color:#172033}
+textarea{min-height:70px;resize:vertical}
+.hint{font-size:12px;color:var(--muted);margin:6px 0 0}
+button{border:0;border-radius:10px;padding:11px 13px;font-weight:700;cursor:pointer}
+.primary{background:var(--blue);color:white;width:100%;margin-top:10px}
+.secondary{background:#eef2ff;color:#1e40af}.danger{background:#fff1f2;color:#be123c}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.stat{background:#f8fafc;border:1px solid var(--line);border-radius:11px;padding:9px 4px;text-align:center}
+.stat span{display:block;color:var(--muted);font-size:11px}.stat strong{font-size:22px;display:block;margin-top:3px}
+.title{font-size:16px;font-weight:800;margin:0 0 12px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:310px}
+th{font-size:12px;color:#475569;background:#f8fafc;padding:10px 5px;text-align:center}
+td{border-top:1px solid #edf0f5;padding:10px 5px;text-align:center;font-size:14px}
+td:first-child{text-align:left;font-weight:750}
+td.qty{font-variant-numeric:tabular-nums}
+.check{width:23px;height:23px;accent-color:var(--blue);cursor:pointer}
+.checkcell{width:58px}
+.qtyinput{width:60px!important;text-align:center;padding:7px!important}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.small{font-size:12px;color:var(--muted)}
+.empty{text-align:center;color:var(--muted);font-size:13px;padding:18px 4px}
+.history{padding:10px 0;border-bottom:1px solid #edf0f5}
+.history:last-child{border:0}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 4px 22px;line-height:1.5}
+@media(max-width:370px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header><h1>✂️ Kapda Register</h1><p>Number · Quantity · Papa / Me cutting</p></header>
+<main>
+<section class="card">
+ <label for="date">Date</label><input id="date" type="date">
+ <div style="height:12px"></div>
+ <label for="numbers">Kapdon ke numbers</label>
+ <textarea id="numbers" placeholder="9913, 9923, 9683, 6393"></textarea>
+ <p class="hint">Numbers comma, space ya alag line se likho. Count / Type mein '3 kurta', '2 pant' ya '1' likh sakte ho.</p>
+ <button class="primary" id="add">＋ Add Numbers</button>
+</section>
+<section class="card">
+ <div class="title">Aaj ka total</div>
+ <div class="stats">
+  <div class="stat"><span>Total quantity</span><strong id="total">0</strong></div>
+  <div class="stat"><span>Papa cut</span><strong id="papa">0</strong></div>
+  <div class="stat"><span>Me cut</span><strong id="me">0</strong></div>
+  <div class="stat"><span>Pending</span><strong id="pending">0</strong></div>
+ </div>
+ <p class="hint">Count / Type mein '3 kurta' likho; total ke liye shuru ka number count hoga. Sirf 'kurta' likhne par 1 count hoga.</p>
+</section>
+<section class="card">
+ <div class="row"><div class="title">Cutting list</div><span class="small" id="daylabel"></span></div>
+ <div class="table-wrap">
+ <table>
+  <thead><tr><th style="text-align:left">Kapda No.</th><th>Count / Type</th><th>Papa</th><th>Me</th></tr></thead>
+  <tbody id="rows"></tbody>
+ </table>
+ </div>
+ <div id="empty" class="empty">Abhi koi number add nahi hua.</div>
+ <div class="row" style="margin-top:13px">
+  <button class="secondary" id="copy">Copy hisaab</button>
+  <button class="danger" id="deleteDay">Delete this date</button>
+ </div>
+</section>
+<section class="card">
+ <div class="row"><div class="title">Purane din</div><div class="row"><button class="secondary" id="restore">Upload Backup</button><button class="secondary" id="backup">Download Backup</button><input id="backupFile" type="file" accept=".csv,text/csv" hidden></div></div>
+ <p class="hint">Pehle download ki hui CSV backup file yahan upload karke purana hisaab wapas la sakta hai.</p><div id="history"></div>
+</section>
+<footer>Auto-save ON — har change isi browser/mobile mein save hota hai. App ko isi browser mein dobara kholne par data wapas dikhega. Browser data clear, app/browser uninstall, ya phone reset se local data mit sakta hai; isliye kabhi-kabhi Backup CSV download karke rakhna.</footer>
+</main>
+<script>
+const KEY='kapda-register-v2';
+const $=id=>document.getElementById(id);
+const today=()=>{let d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+let db={};try{db=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){db={}}
+$('date').value=today();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db));render()}catch(e){alert('Mobile storage full ho sakti hai. Backup CSV nikaal lo.');}}
+function key(){return $('date').value||today()}
+function list(){return db[key()]||[]}
+function qtyValue(value){let match=String(value??'').match(/^\s*(\d+)/);return match?Math.max(0,parseInt(match[1],10)||0):1}
+function totals(a){let papa=0,me=0,total=0;a.forEach(x=>{let q=qtyValue(x.qty);total+=q;if(x.who==='papa')papa+=q;if(x.who==='me')me+=q});return {total,papa,me,pending:total-papa-me}}
+function render(){
+ let a=list(),t=totals(a);
+ $('total').textContent=t.total;$('papa').textContent=t.papa;$('me').textContent=t.me;$('pending').textContent=t.pending;$('daylabel').textContent=key();
+ $('rows').innerHTML='';$('empty').style.display=a.length?'none':'block';
+ a.forEach((x,i)=>{
+  let tr=document.createElement('tr');
+  let num=document.createElement('td');num.textContent=x.num;tr.append(num);
+  let qtd=document.createElement('td');let qi=document.createElement('input');qi.className='qtyinput';qi.type='text';qi.inputMode='text';qi.placeholder='e.g. 3 kurta';qi.value=x.qty;qi.setAttribute('aria-label','Count or type for '+x.num);qi.onchange=()=>{x.qty=qi.value.trim()||'1';save()};qtd.append(qi);tr.append(qtd);
+  for(let who of ['papa','me']){
+   let td=document.createElement('td');td.className='checkcell';let cb=document.createElement('input');cb.type='checkbox';cb.className='check';cb.checked=x.who===who;cb.setAttribute('aria-label',who+' cut '+x.num);
+   cb.onchange=()=>{x.who=cb.checked?who:null;save()};td.append(cb);tr.append(td);
+  }
+  $('rows').append(tr);
+ });
+ let dates=Object.keys(db).filter(d=>db[d]?.length).sort().reverse();$('history').innerHTML='';
+ if(!dates.length)$('history').innerHTML='<div class="empty">Abhi purana record nahi hai.</div>';
+ dates.forEach(d=>{let a2=db[d],t2=totals(a2),el=document.createElement('div');el.className='history';let r=document.createElement('div');r.className='row';let b=document.createElement('b');b.textContent=d;let s=document.createElement('span');s.className='small';s.textContent=`Total ${t2.total} · Papa ${t2.papa} · Me ${t2.me} · Pending ${t2.pending}`;r.append(b,s);el.append(r);let btn=document.createElement('button');btn.className='secondary';btn.style.marginTop='7px';btn.textContent='Open';btn.onclick=()=>{$('date').value=d;render();window.scrollTo({top:0,behavior:'smooth'})};el.append(btn);$('history').append(el)});
+}
+$('add').onclick=()=>{let raw=$('numbers').value.trim();if(!raw)return;let nums=raw.split(/[,\s;]+/).map(x=>x.trim()).filter(Boolean),a=list(),seen=new Set(a.map(x=>x.num));nums.forEach(num=>{if(!seen.has(num))a.push({num,qty:'1',who:null})});db[key()]=a;$('numbers').value='';save()};
+$('date').onchange=render;
+$('deleteDay').onclick=()=>{if(list().length&&confirm('Is date ka poora record delete karna hai?')){delete db[key()];save()}};
+$('copy').onclick=()=>{let a=list(),t=totals(a),txt=[`Date: ${key()}`,`Total quantity: ${t.total}`,`Papa cut: ${t.papa}`,`Me cut: ${t.me}`,`Pending: ${t.pending}`,'','Kapda No. | Qty | Cut by',...a.map(x=>`${x.num} | ${x.qty} | ${x.who||'Pending'}`)].join('\n');if(navigator.clipboard?.writeText)navigator.clipboard.writeText(txt).then(()=>alert('Hisaab copied!')).catch(()=>prompt('Copy hisaab:',txt));else prompt('Copy hisaab:',txt)};
+$('backup').onclick=()=>{let lines=[['Date','Kapda Number','Count / Type','Cut By']];Object.keys(db).sort().forEach(d=>db[d].forEach(x=>lines.push([d,x.num,x.qty,x.who||'Pending'])));let csv=lines.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');let blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='kapda-register-backup.csv';a.click();URL.revokeObjectURL(url)};
+
+function parseCSV(text){
+ const rows=[];let row=[],field='',quoted=false;
+ for(let i=0;i<text.length;i++){
+  const c=text[i];
+  if(quoted){if(c==='"'&&text[i+1]==='"'){field+='"';i++}else if(c==='"'){quoted=false}else field+=c}
+  else if(c==='"')quoted=true;
+  else if(c===','){row.push(field);field=''}
+  else if(c==='\n'){row.push(field);rows.push(row);row=[];field=''}
+  else if(c!=='\r')field+=c;
+ }
+ if(field.length||row.length){row.push(field);rows.push(row)}
+ return rows.filter(r=>r.some(v=>String(v).trim()!==''));
+}
+$('restore').onclick=()=>$('backupFile').click();
+$('backupFile').onchange=async e=>{
+ const file=e.target.files?.[0];if(!file)return;
+ try{
+  const rows=parseCSV(await file.text());
+  if(rows.length<2)throw new Error('CSV mein data nahi mila.');
+  const headers=rows[0].map(x=>String(x).trim().toLowerCase());
+  const idx=(...names)=>headers.findIndex(h=>names.includes(h));
+  const di=idx('date'),ni=idx('kapda number','kapda no.','number'),qi=idx('count / type','quantity','qty'),wi=idx('cut by','who');
+  if(di<0||ni<0)throw new Error('Ye Kapda Register ki valid backup CSV nahi lag rahi.');
+  let imported=0,updated=0;
+  for(const r of rows.slice(1)){
+   const d=String(r[di]||'').trim(),num=String(r[ni]||'').trim();
+   if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||!num)continue;
+   const qty=qi>=0&&String(r[qi]||'').trim()?String(r[qi]).trim():'1';
+   const whoRaw=wi>=0?String(r[wi]||'').trim().toLowerCase():'';
+   const who=whoRaw==='papa'?'papa':(whoRaw==='me'?'me':null);
+   if(!Array.isArray(db[d]))db[d]=[];
+   const existing=db[d].find(x=>String(x.num)===num);
+   if(existing){existing.qty=qty;existing.who=who;updated++}
+   else{db[d].push({num,qty,who});imported++}
+  }
+  localStorage.setItem(KEY,JSON.stringify(db));render();
+  alert(`Backup restore ho gaya!\\nNaye records: ${imported}\\nUpdate hue: ${updated}`);
+ }catch(err){alert('Backup upload nahi ho paya: '+err.message)}
+ e.target.value='';
+};
+render();
+</script>
+</body></html>
